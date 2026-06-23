@@ -1,0 +1,134 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# .gitignore — Inventory Management System
+# Covers: Python, Docker, Terraform, Kubernetes, VS Code, JetBrains, OS, Logs
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ─── Environment Variables (CRITICAL — never commit secrets) ─────────────────
+.env
+*.env
+.env.*
+!.env.example
+
+# ─── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# pytest
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+nosetests.xml
+coverage.xml
+*.cover
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# ─── Docker ───────────────────────────────────────────────────────────────────
+# Docker Compose override files (local dev customizations)
+docker-compose.override.yml
+docker-compose.local.yml
+
+# ─── Terraform ────────────────────────────────────────────────────────────────
+*.tfstate
+*.tfstate.backup
+*.tfstate.lock.info
+.terraform/
+.terraform.lock.hcl
+*.tfvars
+!example.tfvars
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+terraform.rc
+.terraformrc
+
+# ─── Kubernetes ───────────────────────────────────────────────────────────────
+kubeconfig
+*.kubeconfig
+*.kube
+
+# ─── VS Code ──────────────────────────────────────────────────────────────────
+.vscode/
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/settings.json
+*.code-workspace
+
+# ─── JetBrains IDEs (PyCharm, IntelliJ, etc.) ────────────────────────────────
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+.idea_modules/
+
+# ─── macOS ────────────────────────────────────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.Spotlight-V100
+.Trashes
+
+# ─── Linux ────────────────────────────────────────────────────────────────────
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ─── Windows ──────────────────────────────────────────────────────────────────
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# ─── Logs ─────────────────────────────────────────────────────────────────────
+*.log
+logs/
+*.out
+*.err
+npm-debug.log*
+
+# ─── Misc ─────────────────────────────────────────────────────────────────────
+*.swp
+*.swo
+*.tmp
+*.bak
+*.orig
+.cache/

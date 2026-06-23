@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Production-Ready Inventory Management System" />
+  <title>Inventory OS — Dashboard</title>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Font Awesome icons (CDN) -->
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+        integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+        crossorigin="anonymous" />
+</head>
+
+<body>
+<div class="app-layout">
+
+  <!-- ─── Header ──────────────────────────────────────────────────────────── -->
+  <header class="app-header">
+    <div class="header-inner">
+
+      <!-- Logo -->
+      <a class="header-logo" href="#">
+        <div class="logo-icon">
+          <i class="fa-solid fa-boxes-stacked"></i>
+        </div>
+        <span class="logo-text">Inventory <span>OS</span></span>
+      </a>
+
+      <!-- Search Bar -->
+      <div class="header-search">
+        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <input
+          type="text"
+          id="globalSearch"
+          placeholder="Search products..."
+          autocomplete="off"
+        />
+      </div>
+
+      <!-- Right Actions -->
+      <div class="header-actions">
+        <div class="product-count-badge">
+          <i class="fa-solid fa-cube"></i>
+          <span id="headerProductCount">0</span> products
+        </div>
+        <button class="btn btn-primary" onclick="openAddModal()">
+          <i class="fa-solid fa-plus"></i>
+          Add Product
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ─── Main Content ─────────────────────────────────────────────────────── -->
+  <main class="main-content">
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Dashboard</h1>
+        <p class="page-subtitle">Manage products, track inventory, monitor stock levels.</p>
+      </div>
+      <button class="btn btn-secondary" onclick="loadProducts()">
+        <i class="fa-solid fa-arrows-rotate"></i>
+        Refresh
+      </button>
+    </div>
+
+    <!-- ─── Stats Cards ───────────────────────────────────────────────────── -->
+    <div class="stats-grid">
+
+      <div class="stat-card stat-card--blue">
+        <div class="stat-card-header">
+          <span class="stat-label">Total Products</span>
+          <div class="stat-icon stat-icon--blue">
+            <i class="fa-solid fa-cube"></i>
+          </div>
+        </div>
+        <div class="stat-value" id="statTotal">—</div>
+        <div class="stat-description">Products in catalog</div>
+      </div>
+
+      <div class="stat-card stat-card--green">
+        <div class="stat-card-header">
+          <span class="stat-label">Inventory Value</span>
+          <div class="stat-icon stat-icon--green">
+            <i class="fa-solid fa-dollar-sign"></i>
+          </div>
+        </div>
+        <div class="stat-value" id="statValue">—</div>
+        <div class="stat-description">Total stock value</div>
+      </div>
+
+      <div class="stat-card stat-card--amber">
+        <div class="stat-card-header">
+          <span class="stat-label">Low Stock</span>
+          <div class="stat-icon stat-icon--amber">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+          </div>
+        </div>
+        <div class="stat-value" id="statLowStock">—</div>
+        <div class="stat-description">Items with qty ≤ 5</div>
+      </div>
+
+      <div class="stat-card stat-card--purple">
+        <div class="stat-card-header">
+          <span class="stat-label">Categories</span>
+          <div class="stat-icon stat-icon--purple">
+            <i class="fa-solid fa-tags"></i>
+          </div>
+        </div>
+        <div class="stat-value" id="statCategories">—</div>
+        <div class="stat-description">Unique categories</div>
+      </div>
+
+    </div>
+
+    <!-- ─── Table Section ─────────────────────────────────────────────────── -->
+    <div class="table-toolbar">
+      <div class="toolbar-left">
+        <span class="section-title">Products</span>
+        <span class="table-count-badge" id="tableCount">0 items</span>
+      </div>
+      <div class="toolbar-right">
+        <select class="filter-select" id="categoryFilter" onchange="filterByCategory()">
+          <option value="">All Categories</option>
+        </select>
+        <button class="btn btn-ghost btn-sm" id="sortToggle" onclick="toggleSort()">
+          <i class="fa-solid fa-arrow-down-wide-short"></i>
+          Sort
+        </button>
+      </div>
+    </div>
+
+    <div class="table-card">
+      <div class="table-wrapper">
+        <table id="productTable">
+          <thead>
+            <tr>
+              <th onclick="sortTable('name')">
+                Product <i class="sort-icon fa-solid fa-sort" id="sort-name"></i>
+              </th>
+              <th onclick="sortTable('category')">
+                Category <i class="sort-icon fa-solid fa-sort" id="sort-category"></i>
+              </th>
+              <th onclick="sortTable('quantity')" class="hide-mobile">
+                Qty <i class="sort-icon fa-solid fa-sort" id="sort-quantity"></i>
+              </th>
+              <th onclick="sortTable('price')">
+                Price <i class="sort-icon fa-solid fa-sort" id="sort-price"></i>
+              </th>
+              <th onclick="sortTable('value')" class="hide-mobile">
+                Value <i class="sort-icon fa-solid fa-sort" id="sort-value"></i>
+              </th>
+              <th onclick="sortTable('updated_at')" class="hide-mobile">
+                Updated <i class="sort-icon fa-solid fa-sort" id="sort-updated_at"></i>
+              </th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="productTableBody">
+            <!-- Rows injected by JavaScript -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Table Footer with Pagination -->
+      <div class="table-footer">
+        <span class="pagination-info" id="paginationInfo">Showing 0 of 0 results</span>
+        <div class="pagination-controls" id="paginationControls"></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ─── Add / Edit Product Modal ────────────────────────────────────────────── -->
+<div class="modal-overlay" id="productModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title" id="modalTitle">Add Product</h2>
+      <button class="modal-close" onclick="closeModal('productModal')" aria-label="Close">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-grid">
+
+        <!-- Name -->
+        <div class="form-group full-width">
+          <label class="form-label" for="inputName">
+            Product Name <span class="required">*</span>
+          </label>
+          <input
+            class="form-input"
+            type="text"
+            id="inputName"
+            placeholder="e.g. MacBook Pro 14&quot;"
+            maxlength="200"
+          />
+          <span class="form-error" id="errorName"></span>
+        </div>
+
+        <!-- Description -->
+        <div class="form-group full-width">
+          <label class="form-label" for="inputDescription">Description</label>
+          <textarea
+            class="form-textarea"
+            id="inputDescription"
+            placeholder="Optional product description..."
+          ></textarea>
+        </div>
+
+        <!-- Category -->
+        <div class="form-group">
+          <label class="form-label" for="inputCategory">Category</label>
+          <input
+            class="form-input"
+            type="text"
+            id="inputCategory"
+            placeholder="e.g. Electronics"
+            maxlength="100"
+            list="categoryList"
+          />
+          <datalist id="categoryList"></datalist>
+        </div>
+
+        <!-- Quantity -->
+        <div class="form-group">
+          <label class="form-label" for="inputQuantity">
+            Quantity <span class="required">*</span>
+          </label>
+          <input
+            class="form-input"
+            type="number"
+            id="inputQuantity"
+            placeholder="0"
+            min="0"
+            step="1"
+          />
+          <span class="form-error" id="errorQuantity"></span>
+        </div>
+
+        <!-- Price -->
+        <div class="form-group full-width">
+          <label class="form-label" for="inputPrice">
+            Unit Price ($) <span class="required">*</span>
+          </label>
+          <input
+            class="form-input"
+            type="number"
+            id="inputPrice"
+            placeholder="0.00"
+            min="0"
+            step="0.01"
+          />
+          <span class="form-error" id="errorPrice"></span>
+          <span class="form-hint">Price per individual unit</span>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('productModal')">Cancel</button>
+      <button class="btn btn-primary" id="saveBtn" onclick="saveProduct()">
+        <span id="saveBtnText">Save Product</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Delete Confirmation Modal ────────────────────────────────────────────── -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal" style="max-width: 440px;">
+    <div class="modal-body" style="padding: 2rem;">
+      <div class="delete-modal-icon">🗑️</div>
+      <h3 class="delete-modal-title">Delete Product?</h3>
+      <p class="delete-modal-text">
+        You're about to permanently delete <strong id="deleteProductName"></strong>.
+        This action cannot be undone.
+      </p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('deleteModal')">Cancel</button>
+      <button class="btn btn-danger" id="confirmDeleteBtn" onclick="confirmDelete()">
+        <i class="fa-solid fa-trash"></i> Delete
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Toast Container ───────────────────────────────────────────────────────── -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- App Logic -->
+<script src="app.js"></script>
+</body>
+</html>

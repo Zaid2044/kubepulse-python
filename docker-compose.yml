@@ -1,0 +1,126 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# docker-compose.yml
+# Inventory Management System — Docker Compose Orchestration
+#
+# Defines and connects three containers:
+#   1. database  — PostgreSQL (data tier)
+#   2. backend   — Python Flask API (logic tier)
+#   3. frontend  — Nginx static server (presentation tier)
+#
+# Run with:  docker compose up --build
+# Stop with: docker compose down
+# Wipe data:  docker compose down -v
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+
+  # ─── Tier 1: Database (PostgreSQL) ─────────────────────────────────────────
+  database:
+    image: postgres:16-alpine        # Official lightweight PostgreSQL image
+    container_name: inventory_db
+    restart: unless-stopped          # Restart automatically unless manually stopped
+
+    environment:
+      POSTGRES_DB:       ${POSTGRES_DB:-inventory_db}
+      POSTGRES_USER:     ${POSTGRES_USER:-inventory_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-inventory_pass}
+
+    volumes:
+      # Named volume: data persists across container restarts and rebuilds
+      - postgres_data:/var/lib/postgresql/data
+      # Init script: seeds sample data on first container startup
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+    networks:
+      - inventory_network
+
+    healthcheck:
+      # pg_isready checks if PostgreSQL is accepting connections
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-inventory_user} -d ${POSTGRES_DB:-inventory_db}"]
+      interval:   10s   # Check every 10 seconds
+      timeout:    5s    # Fail if no response within 5 seconds
+      retries:    5     # Mark unhealthy after 5 consecutive failures
+      start_period: 30s # Give Postgres time to initialize before first check
+
+    # Don't expose port 5432 to host by default (keep DB internal)
+    # Uncomment below to connect with a local DB client:
+    # ports:
+    #   - "5432:5432"
+
+
+  # ─── Tier 2: Backend (Flask API) ───────────────────────────────────────────
+  backend:
+    build:
+      context:    ./backend
+      dockerfile: Dockerfile
+    container_name: inventory_backend
+    restart: unless-stopped
+
+    environment:
+      # Build the PostgreSQL connection string from individual env vars
+      DATABASE_URL: postgresql://${POSTGRES_USER:-inventory_user}:${POSTGRES_PASSWORD:-inventory_pass}@database:5432/${POSTGRES_DB:-inventory_db}
+      SECRET_KEY:   ${SECRET_KEY:-super-secret-change-in-production}
+      FLASK_DEBUG:  ${FLASK_DEBUG:-false}
+
+    # Wait until database is healthy before starting the backend
+    depends_on:
+      database:
+        condition: service_healthy
+
+    networks:
+      - inventory_network
+
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5000/health || exit 1"]
+      interval:     15s
+      timeout:      5s
+      retries:      3
+      start_period: 20s
+
+    # Don't expose port 5000 to host — Nginx proxies to it internally
+    # Uncomment to call API directly from host:
+    # ports:
+    #   - "5000:5000"
+
+
+  # ─── Tier 3: Frontend (Nginx) ──────────────────────────────────────────────
+  frontend:
+    build:
+      context:    ./frontend
+      dockerfile: Dockerfile
+    container_name: inventory_frontend
+    restart: unless-stopped
+
+    # Expose port 80 to the host — this is the only public-facing port
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"
+
+    # Wait until backend is healthy before starting Nginx
+    # (prevents proxy errors on startup)
+    depends_on:
+      backend:
+        condition: service_healthy
+
+    networks:
+      - inventory_network
+
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:80 || exit 1"]
+      interval: 15s
+      timeout:  5s
+      retries:  3
+
+
+# ─── Networks ──────────────────────────────────────────────────────────────────
+networks:
+  inventory_network:
+    # Bridge network: containers can reach each other by service name
+    # e.g., the backend connects to "database:5432"
+    driver: bridge
+
+
+# ─── Volumes ───────────────────────────────────────────────────────────────────
+volumes:
+  postgres_data:
+    # Named Docker volume — data persists even after containers are removed.
+    # To wipe all data: docker compose down -v

@@ -1,0 +1,16 @@
+# Python dependencies for the Inventory Management System backend
+
+# Web framework
+Flask==3.0.3
+prometheus-client
+# Cross-Origin Resource Sharing (allows frontend to call backend API)
+Flask-Cors==4.0.1
+
+# SQLAlchemy ORM integration for Flask
+Flask-SQLAlchemy==3.1.1
+
+# PostgreSQL database driver
+psycopg2-binary==2.9.9
+
+# WSGI production server (more robust than Flask's built-in server)
+gunicorn==22.0.0
