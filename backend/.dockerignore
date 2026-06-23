@@ -1,35 +1,20 @@
-# Don't copy these into the Docker image
-
-# Python cache files
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 .Python
-
-# Virtual environments
 venv/
 .venv/
 env/
-
-# Environment variables (never include secrets in images)
 .env
 *.env
-
-# Git files
 .git/
 .gitignore
-
-# Editor files
 .vscode/
 .idea/
 *.swp
 *.swo
-
-# Logs
 *.log
 logs/
-
-# OS files
 .DS_Store
 Thumbs.db

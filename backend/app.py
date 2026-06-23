@@ -1,15 +1,42 @@
 import time
 import logging
-from flask import Flask, jsonify, Response
+
+from flask import Flask, jsonify, Response, request, g
 from flask_cors import CORS
+
 from config import Config
 from models import db
 from routes import products_bp
-from prometheus_client import Counter, generate_latest, CONTENT_TYPE_LATEST
 
-REQUESTS = Counter(
-    "app_requests_total",
-    "Total application requests"
+from prometheus_client import (
+    Counter,
+    Histogram,
+    Gauge,
+    generate_latest,
+    CONTENT_TYPE_LATEST
+)
+
+HTTP_REQUESTS = Counter(
+    "http_requests_total",
+    "Total HTTP requests",
+    ["method", "endpoint"]
+)
+
+HTTP_RESPONSES = Counter(
+    "http_responses_total",
+    "Total HTTP responses",
+    ["method", "endpoint", "status"]
+)
+
+REQUEST_DURATION = Histogram(
+    "http_request_duration_seconds",
+    "HTTP request latency",
+    ["method", "endpoint"]
+)
+
+APP_UP = Gauge(
+    "app_up",
+    "Application availability"
 )
 
 logging.basicConfig(
@@ -22,7 +49,6 @@ logger = logging.getLogger(__name__)
 
 APP_START_TIME = time.time()
 
-
 def create_app():
     app = Flask(__name__)
 
@@ -34,13 +60,70 @@ def create_app():
 
     app.register_blueprint(products_bp)
 
+    APP_UP.set(1)
+
     @app.before_request
-    def count_requests():
-        REQUESTS.inc()
+    def before_request():
+        g.start_time = time.time()
+        endpoint = request.endpoint or "unknown"
+        HTTP_REQUESTS.labels(
+            method=request.method,
+            endpoint=endpoint
+        ).inc()
+
+    @app.after_request
+    def after_request(response):
+        endpoint = request.endpoint or "unknown"
+
+        HTTP_RESPONSES.labels(
+            method=request.method,
+            endpoint=endpoint,
+            status=response.status_code
+        ).inc()
+
+        if hasattr(g, "start_time"):
+            REQUEST_DURATION.labels(
+                method=request.method,
+                endpoint=endpoint
+            ).observe(time.time() - g.start_time)
+
+        return response
+
+    @app.route("/live")
+    def live():
+        return jsonify({
+            "status": "alive"
+        }), 200
+
+    @app.route("/ready")
+    def ready():
+        try:
+            db.session.execute(db.text("SELECT 1"))
+            return jsonify({
+                "status": "ready",
+                "database": "connected"
+            }), 200
+        except Exception as e:
+            logger.error(f"Readiness check failed: {e}")
+            return jsonify({
+                "status": "not-ready",
+                "database": "disconnected"
+            }), 503
 
     @app.route("/health")
     def health():
-        return jsonify({"status": "healthy"}), 200
+        try:
+            db.session.execute(db.text("SELECT 1"))
+            return jsonify({
+                "status": "healthy",
+                "database": "connected"
+            }), 200
+        except Exception as e:
+            logger.error(f"Health check failed: {e}")
+            return jsonify({
+                "status": "unhealthy",
+                "database": "disconnected"
+            }), 503
 
     @app.route("/app-metrics")
     def app_metrics():
@@ -62,7 +145,7 @@ def create_app():
             "data": {
                 "total_products": total_products,
                 "database_status": db_status,
-                "uptime_seconds": uptime_seconds,
+                "uptime_seconds": uptime_seconds
             }
         }), 200
 
@@ -80,7 +163,6 @@ def create_app():
     logger.info("Flask application initialized successfully.")
 
     return app
-
 
 app = create_app()
 
